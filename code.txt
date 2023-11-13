@@ -1,0 +1,132 @@
+CREATE TABLE student_grade_system.student ( student_id VARCHAR(20) NOT NULL primary key, Name VARCHAR(20) NOT NULL  ) ENGINE = INNODB;
+INSERT INTO STUDENT(STUDENT_ID,NAME)
+ VALUES("19S001","PRAVEEN RAJ"),
+ ("19S002","NITHILA PALETT"),
+ ("19S003","MADHAVAN"),
+ ("19S004","SHANTHOSH KUMAR"),
+ ("19S005","PON RISHIKESH"),
+ ("19S006","LOGESHWARI"),
+ ("19S007","BHAALA NATARAJEN"),
+ ("19S008","SAI SURAJ"),
+ ("19S009","AVANTHIKA"),
+ ("19S010","SARANYA");
+
+CREATE TABLE student_grade_system.mark ( student_id VARCHAR(20) NOT NULL  references student(student_id), Abstract_Algebra INT(20) NOT NULL , database_management_system INT(20) NOT NULL , design_and_analysis_of_algorithm INT(20) NOT NULL , operating_system INT(20) NOT NULL , predictive_analytics INT(20) NOT NULL  ) ENGINE = INNODB;
+INSERT INTO mark(STUDENT_ID ,Abstract_Algebra,database_management_system,design_and_analysis_of_algorithm,operating_system,predictive_analytics)
+ VALUES("19S001",100,88,94,92,86),
+ ("19S002",90,92,91,93,96),
+ ("19S003",90,76,73,62,85),
+ ("19S004",60,87,72,46,53),
+ ("19S005",69,12,9,4,30),
+ ("19S006",100,98,96,99,100),
+ ("19S007",88,77,66,55,44),
+ ("19S008",90,94,77,53,41),
+ ("19S009",1,2,3,4,5),
+ ("19S010",55,50,52,51,30);
+
+
+
+ CREATE TABLE student_grade_system.avgg(student_id VARCHAR(20) NOT NULL references student(student_id) ,average FLOAT(20))ENGINE = INNODB;
+INSERT INTO avgg(STUDENT_ID,average)
+values("19S001",0),
+("19S002",0),
+ ("19S003",0),
+ ("19S004",0),
+ ("19S005",0),
+ ("19S006",0),
+ ("19S007",0),
+ ("19S008",0),
+ ("19S009",0),
+ ("19S010",0);
+
+
+ CREATE TABLE student_grade_system.grades(student_id VARCHAR(20) NOT NULL references student(student_id),grade varchar(20))ENGINE = INNODB;
+INSERT INTO grades(STUDENT_ID,grade)
+values("19S001","not assigned"),
+("19S002","not assigned"),
+ ("19S003","not assigned"),
+ ("19S004","not assigned"),
+ ("19S005","not assigned"),
+ ("19S006","not assigned"),
+ ("19S007","not assigned"),
+ ("19S008","not assigned"),
+ ("19S009","not assigned"),
+ ("19S010","not assigned");
+
+ CREATE TABLE student_grade_system.instructor ( instructor_id VARCHAR(20) NOT NULL primary key , instructor_name VARCHAR(20) NOT NULL ) ENGINE = INNODB;
+insert into instructor(Instructor_id ,Instructor_name )VALUES
+("62S001","SURYA DEVI"),
+("62S002","RAM PRAKASH"),
+("62S003","SARASWATHI"),
+("62S004","ANITHA"),
+("62S005","PARTHASARATHY");
+
+
+ CREATE TABLE student_grade_system.course ( course_name VARCHAR(40) NOT NULL , course_id VARCHAR(20) NOT NULL primary key,Instructor_id VARCHAR(20) not null references instructor(instructor_id)) ENGINE = INNODB;
+insert into course(course_name ,course_id,Instructor_id)
+values
+("Abstract algebra","19DS410","62S001"),
+("Database Management system","19DS420","62S002"),
+("Design and analysis of algorithm","19DS430","62S005"),
+("Operating System","19DS440","62S002"),
+("Predictive analytics","19DS450","62S004");
+
+
+CREATE TABLE student_grade_system.prerequisites ( course_id VARCHAR(20) NOT NULL references course(course_id)  , prereq_course_id VARCHAR(20) NOT NULL) ENGINE = INNODB;
+insert into prerequisites(course_id,prereq_course_id)
+values
+("19DS410","19DS320"),
+("19DS420","NA"),
+("19DS430","NA"),
+("19DS440","19DS340"),
+("19DS450","19DS310");
+
+select * from student;
+select * from mark;
+select * from avgg;
+select * from grades;
+select * from instructor;
+select * from course;
+select * from prerequisites;
+
+
+start transaction;
+set @var2="sivashree";
+set @var3="Neeraja";
+update student set name = @var2 where student_id="19S010";
+savepoint a;
+update student set name = @var3 where student_id="19S010";
+savepoint b;  
+rollback to a;
+
+select * from student;
+
+
+
+start transaction;
+set @var4=90;
+set @var5=78;
+update mark set Abstract_Algebra = @var4 where student_id="19S005";
+savepoint a;
+update mark set database_management_system = @var5 where student_id="19S005";
+savepoint b;
+rollback to b;
+
+select * from mark;
+update avgg 
+set avgg.average=(select(mark.Abstract_Algebra+mark.database_management_system+mark.design_and_analysis_of_algorithm+mark.operating_system+mark.predictive_analytics)/5
+from mark
+where mark.student_id=avgg.student_id);
+
+update grades 
+set grades.grade=(select if(avgg.average>=90,"S",if(avgg.average>=80 AND avgg.average<90,"A",if(avgg.average>=70 AND avgg.average<80,"B",if(avgg.average>=60 AND avgg.average<70,"C",if(avgg.average>=50 AND avgg.average<60,"D","E")))))
+from avgg
+where grades.student_id=avgg.student_id);
+
+select INSTRUCTOR.instructor_name,COURSE.course_name,COURSE.course_id,prerequisites.prereq_course_id from ((instructor inner join course on instructor.instructor_id=course.instructor_id)
+inner join prerequisites on prerequisites.course_id
+= course.course_id);
+
+select student.student_id,student.Name,mark.Abstract_Algebra,mark.database_management_system,mark.design_and_analysis_of_algorithm,mark.operating_system,mark.predictive_analytics,avgg.average,grades.grade from((( student inner join mark on student.student_id=mark.student_id)
+inner join avgg on mark.student_id = avgg.student_id) 
+inner join grades on avgg.student_id=grades.student_id);
